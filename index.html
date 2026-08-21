@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cool Box</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* =============================================
+       BASE & RESET
+    ============================================= */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-dark:      #1a1a1a;
+      --bg-darker:    #111111;
+      --bg-card:      #222222;
+      --bg-btn:       #2e2e2e;
+      --bg-btn-hover: #3a3a3a;
+      --border:       rgba(255,255,255,0.18);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255,255,255,0.55);
+      --nav-width:    72px;
+      --nav-bottom:   64px;
+      --accent:       rgba(255,255,255,0.85);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* =============================================
+       ANIMATED TOPOGRAPHIC BACKGROUND
+    ============================================= */
+    .topo-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .topo-bg svg {
+      position: absolute;
+      width: 130%;
+      height: 130%;
+      top: -15%;
+      left: -15%;
+      opacity: 0.18;
+      animation: topoShift 20s ease-in-out infinite alternate;
+    }
+    @keyframes topoShift {
+      0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+      50%  { transform: translate(2%, 1%) rotate(1.5deg) scale(1.02); }
+      100% { transform: translate(-1%, 2%) rotate(-1deg) scale(1.01); }
+    }
+
+    /* =============================================
+       APP SHELL
+    ============================================= */
+    .app {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+    }
+
+    /* =============================================
+       SIDEBAR NAV (desktop)
+    ============================================= */
+    .sidebar {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: var(--nav-width);
+      background: rgba(0,0,0,0.35);
+      border-right: 1px solid var(--border);
+      padding-top: 20px;
+      gap: 0;
+      flex-shrink: 0;
+      backdrop-filter: blur(12px);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      padding: 16px 0;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: color 0.25s ease, background 0.25s ease;
+      position: relative;
+      user-select: none;
+    }
+    .nav-item svg { width: 22px; height: 22px; transition: transform 0.25s ease; }
+    .nav-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+    .nav-item:hover svg { transform: scale(1.1); }
+    .nav-item.active {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.08);
+    }
+    .nav-item.active::left-bar {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 3px;
+      background: white;
+      border-radius: 0 3px 3px 0;
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 15%; bottom: 15%;
+      width: 3px;
+      background: white;
+      border-radius: 0 3px 3px 0;
+    }
+
+    /* =============================================
+       MAIN CONTENT AREA
+    ============================================= */
+    .main {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Pages */
+    .page {
+      display: none !important;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+      padding-bottom: calc(var(--nav-bottom) + 20px);
+    }
+    .page.active { display: flex !important; }
+
+    /* =============================================
+       BOTTOM NAV (mobile)
+    ============================================= */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--nav-bottom);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: rgba(20,20,20,0.92);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex: 1;
+      padding: 8px 0;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+    .bottom-nav-item svg { width: 22px; height: 22px; transition: transform 0.2s ease; }
+    .bottom-nav-item.active { color: var(--text-primary); }
+    .bottom-nav-item.active svg { transform: scale(1.1); }
+    .bottom-nav-item:active svg { transform: scale(0.92); }
+
+    /* =============================================
+       DASHBOARD PAGE
+    ============================================= */
+    #page-dashboard {
+      padding: 0;
+    }
+
+    /* Desktop layout: flex row */
+    .dashboard-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+    }
+
+    .dashboard-header {
+      padding: 48px 28px 0;
+      text-align: center;
+    }
+    .dashboard-header h1 {
+      font-size: clamp(36px, 8vw, 56px);
+      font-weight: 300;
+      letter-spacing: -1px;
+    }
+    .dashboard-header .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .dashboard-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 28px;
+    }
+
+    /* Box icon */
+    .box-icon {
+      width: 52px;
+      height: 52px;
+      margin-bottom: 16px;
+      opacity: 0.85;
+      animation: floatIcon 4s ease-in-out infinite;
+    }
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-6px); }
+    }
+
+    .temp-label {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .temp-value {
+      font-size: clamp(72px, 18vw, 110px);
+      font-weight: 300;
+      letter-spacing: -3px;
+      line-height: 1;
+      margin-bottom: 16px;
+      transition: opacity 0.4s ease;
+    }
+    .temp-value.error {
+      font-size: clamp(28px, 6vw, 40px);
+      color: #ff6b6b;
+      letter-spacing: 0;
+    }
+
+    .relay-status {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      letter-spacing: 0.3px;
+    }
+    .relay-status span { color: var(--text-primary); }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    /* Manual override section */
+    .override-section {
+      width: 100%;
+      max-width: 420px;
+      padding: 0 28px 28px;
+    }
+    .override-title {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* =============================================
+       BUTTONS
+    ============================================= */
+    .btn {
+      flex: 1;
+      padding: 16px;
+      background: var(--bg-btn);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.15s ease,
+        box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: inherit;
+    }
+    .btn:hover {
+      background: var(--bg-btn-hover);
+      border-color: rgba(255,255,255,0.35);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: scale(0.96) translateY(0px);
+      box-shadow: none;
+    }
+    .btn:active::after { opacity: 0.06; }
+
+    /* Active / selected button state */
+    .btn.selected {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.5);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .btn-full { width: 100%; flex: none; }
+
+    /* Ripple effect */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transform: scale(0);
+      animation: rippleAnim 0.55s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* =============================================
+       SETTINGS PAGE
+    ============================================= */
+    #page-settings {
+      padding-bottom: calc(var(--nav-bottom) + 20px);
+    }
+
+    .settings-header {
+      padding: 40px 28px 24px;
+    }
+    .settings-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .settings-logo svg { width: 22px; height: 22px; opacity: 0.85; }
+    .settings-logo span { font-size: 18px; font-weight: 300; }
+    .settings-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding-left: 32px;
+    }
+    .settings-title {
+      font-size: clamp(28px, 6vw, 38px);
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      margin-top: 24px;
+    }
+
+    .settings-card {
+      margin: 0 20px 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .settings-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .field-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      text-align: center;
+    }
+    .field-input-wrap {
+      position: relative;
+    }
+    .field-input {
+      width: 100%;
+      padding: 18px 20px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-primary);
+      font-size: 22px;
+      font-weight: 300;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      -moz-appearance: textfield;
+    }
+    .field-input::-webkit-outer-spin-button,
+    .field-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .field-input:focus {
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+    }
+    .field-input::placeholder { color: rgba(255,255,255,0.25); }
+
+    /* =============================================
+       HISTORY PAGE (placeholder)
+    ============================================= */
+    .history-header {
+      padding: 40px 28px 0;
+      margin-bottom: 32px;
+    }
+    .history-header h1 { font-size: clamp(28px, 6vw, 40px); font-weight: 300; }
+    .history-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      padding-bottom: 80px;
+    }
+    .history-empty svg { width: 56px; height: 56px; opacity: 0.3; }
+    .history-empty p { font-size: 15px; }
+
+    /* =============================================
+       CONNECTION DOT
+    ============================================= */
+    .conn-badge {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 12px 5px 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      backdrop-filter: blur(12px);
+      z-index: 200;
+      transition: opacity 0.3s ease;
+    }
+    .conn-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #555;
+      transition: background 0.4s ease;
+      flex-shrink: 0;
+    }
+    .conn-dot.live {
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade80;
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+    .conn-dot.offline {
+      background: #fbbf24;
+      box-shadow: 0 0 6px #fbbf24;
+      animation: pulseDot 1.5s ease-in-out infinite;
+    }
+    .conn-dot.error { background: #f87171; box-shadow: 0 0 6px #f87171; }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* =============================================
+       TOAST NOTIFICATION
+    ============================================= */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--nav-bottom) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(40,40,40,0.95);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 12px 24px;
+      font-size: 13px;
+      color: var(--text-primary);
+      backdrop-filter: blur(16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 500;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* =============================================
+       RESPONSIVE: DESKTOP
+    ============================================= */
+    @media (min-width: 768px) {
+      :root { --nav-bottom: 0px; }
+
+      .bottom-nav { display: none; }
+      .sidebar { display: flex; }
+
+      .page { padding-bottom: 0; overflow: hidden; }
+
+      /* ---- Dashboard page: full-height grid ---- */
+      #page-dashboard {
+        overflow: hidden;
+      }
+
+      /* Title row: "Cool Box" top-left, full width */
+      .dashboard-header {
+        display: block;
+        text-align: left;
+        padding: 36px 56px 0 56px;
+      }
+      .dashboard-header h1 {
+        font-size: clamp(40px, 5vw, 60px);
+        font-weight: 300;
+        letter-spacing: -2px;
+      }
+      .dashboard-header .subtitle { display: none; }
+
+      /* Two-column body below the title */
+      .dashboard-layout {
+        flex: 1;
+        flex-direction: row;
+        align-items: stretch;
+        min-height: 0;
+      }
+
+      /* LEFT column: icon + temp + relay — all centered */
+      .dashboard-left {
+        flex: 1.1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 40px 60px 56px;
+      }
+
+      /* Hide the duplicate desktop-only header (title is now above layout) */
+      .dashboard-header-desktop { display: none !important; }
+
+      .temp-display-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .box-icon { width: 52px; height: 52px; }
+      .temp-label { text-align: center; font-size: 18px; }
+      .temp-value {
+        text-align: center;
+        font-size: clamp(80px, 10vw, 120px);
+      }
+      .relay-status { text-align: center; font-size: 17px; }
+
+      /* Hide mobile-only divider and mobile override panel on desktop */
+      .divider { display: none; }
+      #overrideMobile { display: none; }
+
+      /* RIGHT column: Manual Override — centered */
+      .dashboard-right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 56px 60px 20px;
+      }
+      .override-section {
+        width: 100%;
+        max-width: 340px;
+        padding: 0;
+      }
+      .override-title {
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 28px;
+        color: var(--text-primary);
+        font-weight: 300;
+        letter-spacing: 0.2px;
+      }
+      /* Stack buttons vertically, full width, outlined style */
+      .btn-row { flex-direction: column; gap: 14px; margin-bottom: 0; }
+      .btn {
+        padding: 18px;
+        font-size: 12px;
+        letter-spacing: 1.4px;
+        /* Override buttons: transparent bg, thin border */
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.35);
+      }
+      .btn:hover {
+        background: rgba(255,255,255,0.07);
+        border-color: rgba(255,255,255,0.55);
+        transform: translateY(-1px);
+      }
+      .btn.selected {
+        background: rgba(255,255,255,0.12);
+        border-color: rgba(255,255,255,0.6);
+      }
+
+      /* Settings desktop: side-by-side inputs, vertically centered */
+      #page-settings {
+        overflow-y: auto;
+        justify-content: flex-start;
+      }
+      .settings-header {
+        padding: 48px 56px 28px;
+      }
+      .settings-logo span { font-size: 20px; }
+      .settings-subtitle { padding-left: 34px; font-size: 13px; }
+      .settings-title {
+        font-size: clamp(24px, 3vw, 34px);
+        margin-top: 20px;
+        font-weight: 300;
+      }
+      .settings-card {
+        margin: 0 40px 40px;
+        padding: 32px 32px 28px;
+        border-radius: 18px;
+      }
+      .settings-fields {
+        flex-direction: row;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .field-group { flex: 1; }
+      .field-label { font-size: 14px; margin-bottom: 10px; }
+      .field-input { font-size: 26px; padding: 20px 24px; }
+
+      /* Save Changes btn: dark filled (not transparent like override buttons) */
+      .settings-save-btn {
+        background: rgba(255,255,255,0.12) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.3px !important;
+        padding: 18px !important;
+      }
+      .settings-save-btn:hover {
+        background: rgba(255,255,255,0.2) !important;
+        border-color: rgba(255,255,255,0.35) !important;
+      }
+
+      /* History desktop */
+      #page-history {
+        overflow-y: auto;
+        justify-content: flex-start;
+      }
+      .history-header {
+        padding: 48px 56px 0;
+        margin-bottom: 0;
+      }
+      .history-empty {
+        padding-bottom: 0;
+        margin-top: 0;
+      }
+
+      /* Connection badge */
+      .conn-badge { top: 20px; right: 20px; }
+
+      /* Toast */
+      .toast { bottom: 24px; }
+    }
+
+    /* Mobile: hide desktop-only right column & desktop header duplicate */
+    .dashboard-header-desktop { display: none; }
+    .dashboard-left, .dashboard-right { width: 100%; }
+    @media (max-width: 767px) {
+      .dashboard-right { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Animated topographic background -->
+<div class="topo-bg">
+  <svg viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="blur"><feGaussianBlur stdDeviation="1.2"/></filter>
+    </defs>
+    <g fill="none" stroke="white" stroke-width="1" filter="url(#blur)">
+      <path d="M-50,350 C100,200 300,500 500,300 S700,100 950,250"/>
+      <path d="M-50,380 C100,230 300,530 500,330 S700,130 950,280"/>
+      <path d="M-50,410 C100,260 300,560 500,360 S700,160 950,310"/>
+      <path d="M-50,440 C100,290 300,590 500,390 S700,190 950,340"/>
+      <path d="M-50,470 C100,320 300,620 500,420 S700,220 950,370"/>
+      <path d="M-50,500 C100,350 300,650 500,450 S700,250 950,400"/>
+      <path d="M-50,530 C100,380 300,680 500,480 S700,280 950,430"/>
+      <path d="M-50,320 C100,170 300,470 500,270 S700,70  950,220"/>
+      <path d="M-50,290 C100,140 300,440 500,240 S700,40  950,190"/>
+      <path d="M-50,560 C100,410 300,710 500,510 S700,310 950,460"/>
+      <path d="M-50,590 C150,440 350,690 550,490 S750,290 950,440"/>
+      <path d="M-50,260 C150,110 350,410 550,210 S750,10  950,160"/>
+      <path d="M 600,−50 C 500,100 750,300 550,400 S 350,500 400,750"/>
+      <path d="M 650,−50 C 550,100 800,300 600,400 S 400,500 450,750"/>
+      <path d="M 700,−50 C 600,100 850,300 650,400 S 450,500 500,750"/>
+      <path d="M 750,−50 C 650,100 900,300 700,400 S 500,500 550,750"/>
+      <path d="M 800,−50 C 700,100 850,250 750,400 S 550,520 600,750"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Connection badge -->
+<div class="conn-badge">
+  <div class="conn-dot" id="connDot"></div>
+  <span id="connText">Connecting...</span>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- App shell -->
+<div class="app">
+
+  <!-- Sidebar (desktop) -->
+  <nav class="sidebar">
+    <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-page="history" onclick="navigate('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 15 15"/>
+        <path d="M3.5 8 A9 9 0 0 1 8 3.5" stroke-dasharray="2 3"/>
+      </svg>
+      History
+    </div>
+    <div class="nav-item" data-page="settings" onclick="navigate('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+      </svg>
+      Settings
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- ====== DASHBOARD PAGE ====== -->
+    <div id="page-dashboard" class="page active">
+
+      <!-- Mobile header -->
+      <div class="dashboard-header">
+        <h1>Cool Box</h1>
+        <p class="subtitle">Variant 2</p>
+      </div>
+
+      <div class="dashboard-layout">
+
+        <!-- Left: temperature display -->
+        <div class="dashboard-left">
+
+          <!-- Desktop-only header inside left column -->
+          <div class="dashboard-header-desktop">
+            <h1>Cool Box</h1>
+          </div>
+
+          <div class="temp-display-block" style="text-align:center; align-items:center;">
+            <!-- Box SVG icon -->
+            <svg class="box-icon" viewBox="0 0 60 60" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M30 8 L52 20 L52 40 L30 52 L8 40 L8 20 Z"/>
+              <path d="M30 8 L30 52"/>
+              <path d="M8 20 L52 20"/>
+              <path d="M19 14 L41 26"/>
+              <path d="M8 20 L30 32 L52 20"/>
+            </svg>
+
+            <p class="temp-label">Inside Temperature</p>
+            <div class="temp-value" id="tempValue">-- °C</div>
+            <p class="relay-status" id="relayStatus">Relay: <span>--</span></p>
+          </div>
+
+          <!-- Divider (mobile only) -->
+          <div class="divider"></div>
+
+          <!-- Manual override on mobile (inside left column) -->
+          <div class="override-section" id="overrideMobile">
+            <p class="override-title">Manual Override</p>
+            <div class="btn-row">
+              <button class="btn" id="btnForceOnM" onclick="setMode('manual_on', this)">Force ON</button>
+              <button class="btn" id="btnForceOffM" onclick="setMode('manual_off', this)">Force OFF</button>
+            </div>
+            <button class="btn btn-full" id="btnAutoM" onclick="setMode('auto', this)">Return to Auto</button>
+          </div>
+        </div>
+
+        <!-- Right: manual override (desktop only) -->
+        <div class="dashboard-right" id="dashRight">
+          <div class="override-section">
+            <p class="override-title">Manual Override</p>
+            <div class="btn-row" style="flex-direction:column;">
+              <button class="btn btn-full" id="btnForceOnD" onclick="setMode('manual_on', this)">Force ON</button>
+              <button class="btn btn-full" id="btnForceOffD" onclick="setMode('manual_off', this)">Force OFF</button>
+              <button class="btn btn-full" id="btnAutoD" onclick="setMode('auto', this)">Return to Auto</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====== HISTORY PAGE ====== -->
+    <div id="page-history" class="page">
+      <div class="history-header">
+        <div class="settings-logo">
+          <svg viewBox="0 0 60 60" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M30 8 L52 20 L52 40 L30 52 L8 40 L8 20 Z"/>
+            <path d="M30 8 L30 52"/>
+            <path d="M8 20 L52 20"/>
+            <path d="M8 20 L30 32 L52 20"/>
+          </svg>
+          <span>Cool Box</span>
+        </div>
+        <p class="settings-subtitle">IoT Temperature Monitor &amp; Control</p>
+        <h1 class="settings-title">History</h1>
+      </div>
+      <div class="history-content" style="flex: 1; padding: 0 40px 40px; position: relative; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- ====== SETTINGS PAGE ====== -->
+    <div id="page-settings" class="page">
+      <div class="settings-header">
+        <div class="settings-logo">
+          <svg viewBox="0 0 60 60" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M30 8 L52 20 L52 40 L30 52 L8 40 L8 20 Z"/>
+            <path d="M30 8 L30 52"/>
+            <path d="M8 20 L52 20"/>
+            <path d="M8 20 L30 32 L52 20"/>
+          </svg>
+          <span>Cool Box</span>
+        </div>
+        <p class="settings-subtitle">IoT Temperature Monitor &amp; Control</p>
+        <h2 class="settings-title">Cool Box Calibration Settings</h2>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-fields">
+          <div class="field-group">
+            <label class="field-label">Threshold Temperature (°C)</label>
+            <input class="field-input" type="number" id="thresholdInput" step="0.1" placeholder="20.0" onkeydown="if(event.key === 'Enter') saveSettings(document.getElementById('btnSave'))">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sensor Offset (°C)</label>
+            <input class="field-input" type="number" id="calibrationInput" step="0.1" placeholder="0.0" onkeydown="if(event.key === 'Enter') saveSettings(document.getElementById('btnSave'))">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Buffer / Hysteresis (°C)</label>
+            <input class="field-input" type="number" id="hysteresisInput" step="0.1" placeholder="0.5" onkeydown="if(event.key === 'Enter') saveSettings(document.getElementById('btnSave'))">
+          </div>
+        </div>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; margin-bottom: 16px;">
+          Buffer prevents the fan from rapidly switching on/off.<br>
+          Example: Threshold 20°C with Buffer 1.5°C → Fan ON at 20°C, OFF at 18.5°C
+        </p>
+        <button class="btn btn-full settings-save-btn" onclick="saveSettings(this)" id="btnSave">Save Changes</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Bottom nav (mobile) -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+      <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+      <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+      <rect x="13" y="13" width="8" height="8" rx="1.5"/>
+    </svg>
+    Dashboard
+  </div>
+  <div class="bottom-nav-item" data-page="history" onclick="navigate('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="12" cy="12" r="9"/>
+      <polyline points="12 7 12 12 15 15"/>
+    </svg>
+    History
+  </div>
+  <div class="bottom-nav-item" data-page="settings" onclick="navigate('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+    </svg>
+    Settings
+  </div>
+</nav>
+
+<script>
+  // ============================================================
+  //   SUPABASE CONFIG
+  // ============================================================
+  const SUPABASE_URL = 'https://wrqsngrlgpkzyyawbojd.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXNuZ3JsZ3Brenl5YXdib2pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNjA0ODQsImV4cCI6MjEwMjczNjQ4NH0.bbc9Pw02uc5LGOsf9RXo2KBosN0CX5gdJ2sFUvDADVk';
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ============================================================
+  //   NAVIGATION
+  // ============================================================
+  function navigate(page) {
+    // Pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+
+    // Bottom nav items
+    document.querySelectorAll('.bottom-nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.page === page);
+    });
+
+    // Sidebar items
+    document.querySelectorAll('.sidebar .nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.page === page);
+    });
+
+    if (page === 'history') {
+      loadHistory();
+    }
+  }
+
+  // ============================================================
+  //   RIPPLE EFFECT
+  // ============================================================
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.5;
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    const ripple = document.createElement('span');
+    ripple.classList.add('ripple');
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
+
+  // ============================================================
+  //   TOAST
+  // ============================================================
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // ============================================================
+  //   CONNECTION STATUS + MACHINE HEARTBEAT
+  // ============================================================
+  let supabaseConnected = false;
+  let lastDataTime = 0;          // Timestamp of last data update from ESP32
+  const OFFLINE_THRESHOLD = 10000; // 10 seconds without data = machine offline
+
+  function setConnected(state) {
+    const dot  = document.getElementById('connDot');
+    const text = document.getElementById('connText');
+    dot.className = 'conn-dot';
+
+    if (state === 'live') {
+      supabaseConnected = true;
+      dot.classList.add('live');
+      text.textContent = 'Live';
+    } else if (state === 'offline') {
+      dot.classList.add('offline');
+      text.textContent = 'Machine Offline';
+    } else if (state === 'error') {
+      supabaseConnected = false;
+      dot.classList.add('error');
+      text.textContent = 'Disconnected';
+    } else {
+      text.textContent = 'Connecting...';
+    }
+  }
+
+  // Called whenever we receive fresh data from ESP32
+  function markDataReceived() {
+    lastDataTime = Date.now();
+    if (supabaseConnected) {
+      setConnected('live');
+    }
+  }
+
+  // Heartbeat: check every 3 seconds if the ESP32 is still sending
+  setInterval(() => {
+    if (!supabaseConnected) return; // Already showing "Disconnected"
+    if (lastDataTime === 0) return; // Haven't received first data yet
+
+    const elapsed = Date.now() - lastDataTime;
+    if (elapsed > OFFLINE_THRESHOLD) {
+      setConnected('offline');
+    }
+  }, 3000);
+
+  // ============================================================
+  //   UI UPDATE
+  // ============================================================
+  let currentMode = 'auto';
+  let lastHeartbeat = null;  // Track heartbeat counter to detect ESP32 connection
+
+  function updateUI(data) {
+    // Check if the ESP32 sent a new heartbeat
+    if (data.heartbeat !== undefined && data.heartbeat !== lastHeartbeat) {
+      lastHeartbeat = data.heartbeat;
+      markDataReceived();  // Mark live!
+    }
+
+    // Temperature display
+    const tempEl = document.getElementById('tempValue');
+    if (data.temperature <= -100) {
+      tempEl.textContent = '⚠ SENSOR ERROR';
+      tempEl.classList.add('error');
+    } else {
+      tempEl.textContent = data.temperature.toFixed(1) + ' °C';
+      tempEl.classList.remove('error');
+    }
+
+    // Relay + mode status text
+    currentMode = data.mode;
+    const relayEl = document.getElementById('relayStatus');
+    let statusText = '';
+    if (data.mode === 'auto') {
+      statusText = 'AUTO (' + (data.relay_state ? 'ON' : 'OFF') + ')';
+    } else if (data.mode === 'manual_on') {
+      statusText = 'MANUAL (ON)';
+    } else {
+      statusText = 'MANUAL (OFF)';
+    }
+    relayEl.innerHTML = 'Relay: <span>' + statusText + '</span>';
+
+    // Highlight active button
+    updateActiveBtn(data.mode);
+
+    // Sync settings inputs (ONLY if the user isn't currently typing in them!)
+    if (document.activeElement.id !== 'thresholdInput') {
+      document.getElementById('thresholdInput').value = data.threshold;
+    }
+    if (document.activeElement.id !== 'calibrationInput') {
+      document.getElementById('calibrationInput').value = data.calibration_offset;
+    }
+    if (data.hysteresis !== undefined && document.activeElement.id !== 'hysteresisInput') {
+      document.getElementById('hysteresisInput').value = data.hysteresis;
+    }
+  }
+
+  function updateActiveBtn(mode) {
+    const pairs = [
+      ['btnForceOnM', 'btnForceOnD', 'manual_on'],
+      ['btnForceOffM', 'btnForceOffD', 'manual_off'],
+      ['btnAutoM', 'btnAutoD', 'auto'],
+    ];
+    pairs.forEach(([mId, dId, val]) => {
+      const isActive = mode === val;
+      [mId, dId].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('selected', isActive);
+      });
+    });
+  }
+
+  // ============================================================
+  //   ACTIONS
+  // ============================================================
+  async function setMode(newMode, btnEl) {
+    // Optimistic UI update
+    updateActiveBtn(newMode);
+
+    const { error } = await db
+      .from('device_state')
+      .update({ mode: newMode })
+      .eq('id', 1);
+
+    if (error) {
+      showToast('Error: ' + error.message);
+      updateActiveBtn(currentMode); // revert
+    } else {
+      const labels = { auto: 'Auto mode set', manual_on: 'Fan forced ON', manual_off: 'Fan forced OFF' };
+      showToast(labels[newMode] || 'Done');
+    }
+  }
+
+  async function saveSettings(btnEl) {
+    const threshold   = parseFloat(document.getElementById('thresholdInput').value);
+    const calibration = parseFloat(document.getElementById('calibrationInput').value);
+    const hysteresis  = parseFloat(document.getElementById('hysteresisInput').value);
+
+    if (isNaN(threshold) || isNaN(calibration) || isNaN(hysteresis)) {
+      showToast('Please enter valid numbers');
+      return;
+    }
+    if (hysteresis < 0) {
+      showToast('Buffer must be 0 or greater');
+      return;
+    }
+
+    // Button loading state
+    const orig = btnEl.textContent;
+    btnEl.textContent = 'Saving...';
+    btnEl.disabled = true;
+
+    const { error } = await db
+      .from('device_state')
+      .update({ threshold, calibration_offset: calibration, hysteresis, mode: 'auto' })
+      .eq('id', 1);
+
+    btnEl.textContent = orig;
+    btnEl.disabled = false;
+
+    if (error) {
+      showToast('Error: ' + error.message);
+    } else {
+      showToast('Settings saved ✓');
+    }
+  }
+
+  // ============================================================
+  //   INIT + REALTIME
+  // ============================================================
+  async function init() {
+    setConnected('connecting');
+
+    const { data, error } = await db
+      .from('device_state')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (error) {
+      console.error(error);
+      setConnected('error');
+      return;
+    }
+
+    updateUI(data);
+    setConnected('live');
+
+    // Subscribe to realtime changes
+    db.channel('coolbox-realtime')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'device_state', filter: 'id=eq.1' },
+        (payload) => {
+          updateUI(payload.new);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setConnected('live');
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setConnected('error');
+      });
+  }
+
+  let historyChart = null;
+  async function loadHistory() {
+    const { data, error } = await db
+      .from('temperature_log')
+      .select('temperature, created_at')
+      .order('created_at', { ascending: false })
+      .limit(60);
+
+    if (error) {
+      console.error("Error loading history:", error);
+      return;
+    }
+
+    if (!data || data.length === 0) return;
+
+    data.reverse(); // Chronological order
+
+    const labels = data.map(row => {
+      const d = new Date(row.created_at);
+      return d.getHours() + ':' + d.getMinutes().toString().padStart(2, '0');
+    });
+    const temps = data.map(row => row.temperature);
+
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    
+    if (historyChart) {
+      historyChart.data.labels = labels;
+      historyChart.data.datasets[0].data = temps;
+      historyChart.update();
+    } else {
+      historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Temperature (°C)',
+            data: temps,
+            borderColor: '#4ade80',
+            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+            borderWidth: 2,
+            pointRadius: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { color: 'rgba(255,255,255,0.6)' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: 'rgba(255,255,255,0.6)', maxTicksLimit: 10 }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
