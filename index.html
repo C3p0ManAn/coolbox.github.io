@@ -245,11 +245,10 @@
 
     /* Hero Logo */
     .dashboard-hero-logo {
-      /* Dynamic sizing: scales based on viewport, perfectly maintaining aspect ratio */
-      height: clamp(120px, 20vw, 240px) !important;
+      height: 60px !important;
       width: auto !important;
-      /* Use a strong negative margin to offset the empty transparent space at the bottom of the image file */
-      margin-bottom: clamp(-40px, -8vw, -80px);
+      /* Adjusted negative margin for 60px size */
+      margin-bottom: -12px;
       animation: floatLogo 6s ease-in-out infinite;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
       cursor: pointer;
@@ -263,7 +262,7 @@
     }
     @keyframes floatLogo {
       0%, 100% { transform: translateY(0px) translateZ(0); }
-      50%      { transform: translateY(-12px) translateZ(0); }
+      50%      { transform: translateY(-8px) translateZ(0); }
     }
 
     .temp-label {
@@ -307,9 +306,16 @@
 
     /* Manual override section */
     .override-section {
-      width: 100%;
+      width: calc(100% - 40px);
       max-width: 420px;
-      padding: 0 28px 28px;
+      margin: 0 auto 32px auto;
+      background: linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.8));
+      border: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05);
     }
     .override-title {
       font-size: 16px;
@@ -831,7 +837,6 @@
       <!-- Mobile header -->
       <div class="dashboard-header">
         <h1>PoCoBox</h1>
-        <p class="subtitle">Variant 2</p>
       </div>
 
       <div class="dashboard-layout">
@@ -852,9 +857,6 @@
             <div class="temp-value" id="tempValue">-- °C</div>
             <p class="relay-status" id="relayStatus">Relay: <span>--</span></p>
           </div>
-
-          <!-- Divider (mobile only) -->
-          <div class="divider"></div>
 
           <!-- Manual override on mobile (inside left column) -->
           <div class="override-section" id="overrideMobile">
