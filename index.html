@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PoCoBox</title>
+  <link rel="icon" type="image/png" href="logo.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -158,6 +159,13 @@
       display: inline-block;
       vertical-align: middle;
       
+      /* Anti-save / anti-drag protections */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-user-drag: none;
+      pointer-events: none; /* Prevents right-click menu entirely */
+      
       /* 3D Emboss & Shadow Effect for transparent PNG */
       filter: 
         drop-shadow(0px 6px 8px rgba(0, 0, 0, 0.7)) 
@@ -245,21 +253,23 @@
 
     /* Hero Logo */
     .dashboard-hero-logo {
-      /* Fluidly scale logo width, max 400px on desktop so it doesn't overflow mobile */
+      /* Fluidly scale logo width, max 460px on desktop so it doesn't overflow mobile */
       width: 100% !important;
-      max-width: 380px !important;
+      max-width: 460px !important;
       height: auto !important;
       /* Proportional negative margin to eat the transparent space at the bottom */
-      margin-bottom: -24%;
+      margin-bottom: -12%;
       animation: floatLogo 6s ease-in-out infinite;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
-      cursor: pointer;
+      cursor: default;
       will-change: transform;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+      /* Restore pointer events so hover animation works, block right-clicks via HTML instead */
+      pointer-events: auto;
     }
     .dashboard-hero-logo:hover {
-      transform: scale(1.2) translateY(-5px) translateZ(0);
+      transform: scale(1.1) translateY(-5px) translateZ(0);
       filter: 
         drop-shadow(0px 15px 25px rgba(14, 165, 233, 0.6)) 
         drop-shadow(0px -1px 2px rgba(255, 255, 255, 0.5));
@@ -274,12 +284,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px; /* Uniform spacing between logo, text, and values */
+      gap: 12px; /* Uniform spacing between logo, text, and values */
       width: 100%;
     }
 
     .temp-label {
-      font-size: 20px;
+      font-size: 17px;
       color: var(--text-secondary);
       font-weight: 400;
       letter-spacing: 0.5px;
@@ -287,7 +297,7 @@
     }
 
     .temp-value {
-      font-size: clamp(72px, 18vw, 120px);
+      font-size: clamp(72px, 18vw, 110px);
       font-weight: 300;
       letter-spacing: -3px;
       line-height: 1;
@@ -324,15 +334,15 @@
       max-width: 420px;
       margin: 0 auto 32px auto;
       background: linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.8));
-      border: 10px solid rgba(255,255,255,0.05);
-      border-top: 10px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
       padding: 24px;
       backdrop-filter: blur(12px);
       box-shadow: 0 12px 32px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05);
     }
     .override-title {
-      font-size: 22px;
+      font-size: 16px;
       font-weight: 400;
       color: var(--text-secondary);
       margin-bottom: 16px;
@@ -787,7 +797,7 @@
   <nav class="sidebar">
     <!-- Logo -->
     <div style="padding: 10px 0 20px;">
-      <img src="logo.png" alt="PoCoBox" class="brand-logo">
+      <img src="logo.png" alt="PoCoBox" class="brand-logo" draggable="false" oncontextmenu="return false;">
     </div>
 
     <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
@@ -839,7 +849,7 @@
 
           <div class="temp-display-block" style="text-align:center; align-items:center;">
             <!-- Logo image -->
-            <img src="logo.png" alt="PoCoBox" class="brand-logo dashboard-hero-logo">
+            <img src="logo.png" alt="PoCoBox" class="brand-logo dashboard-hero-logo" draggable="false" oncontextmenu="return false;">
 
             <p class="temp-label">Inside Temperature</p>
             <div class="temp-value" id="tempValue">-- °C</div>
@@ -876,7 +886,7 @@
     <div id="page-history" class="page">
       <div class="history-header">
         <div class="settings-logo">
-          <img src="logo.png" alt="PoCoBox" class="brand-logo">
+          <img src="logo.png" alt="PoCoBox" class="brand-logo" draggable="false" oncontextmenu="return false;">
           <span>PoCoBox</span>
         </div>
         <p class="settings-subtitle">IoT Temperature Monitor &amp; Control</p>
@@ -898,7 +908,7 @@
     <div id="page-settings" class="page">
       <div class="settings-header">
         <div class="settings-logo">
-          <img src="logo.png" alt="PoCoBox" class="brand-logo">
+          <img src="logo.png" alt="PoCoBox" class="brand-logo" draggable="false" oncontextmenu="return false;">
           <span>PoCoBox</span>
         </div>
         <p class="settings-subtitle">IoT Temperature Monitor &amp; Control</p>
