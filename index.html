@@ -254,12 +254,11 @@
     /* Hero Logo */
     .dashboard-hero-logo {
       /* Fluidly scale logo width, max 460px on desktop so it doesn't overflow mobile */
-      margin-top: -24%;
       width: 100% !important;
       max-width: 460px !important;
       height: auto !important;
       /* Proportional negative margin to completely swallow the empty transparent padding */
-      
+      margin-bottom: -30%;
       animation: floatLogo 6s ease-in-out infinite;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
       cursor: default;
@@ -333,7 +332,8 @@
     .override-section {
       width: calc(100% - 40px);
       max-width: 420px;
-      margin: 0 auto 32px auto;
+      /* Negative top margin pulls the override box closer to the temperature above it */
+      margin: -12px auto 32px auto;
       background: linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.8));
       border: 1px solid rgba(255,255,255,0.05);
       border-top: 1px solid rgba(255,255,255,0.1);
