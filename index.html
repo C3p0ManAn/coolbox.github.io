@@ -245,7 +245,7 @@
 
     /* Hero Logo */
     .dashboard-hero-logo {
-      height: 240px !important;
+      height: 60px !important;
       width: auto !important;
       /* Adjusted negative margin for 60px size */
       margin-bottom: -12px;
@@ -661,25 +661,8 @@
         font-weight: 300;
         letter-spacing: 0.2px;
       }
-      /* Stack buttons vertically, full width, outlined style */
+      /* Stack buttons vertically in the desktop sidebar card */
       .btn-row { flex-direction: column; gap: 14px; margin-bottom: 0; }
-      .btn {
-        padding: 18px;
-        font-size: 12px;
-        letter-spacing: 1.4px;
-        /* Override buttons: transparent bg, thin border */
-        background: transparent;
-        border: 1px solid rgba(255,255,255,0.35);
-      }
-      .btn:hover {
-        background: rgba(255,255,255,0.07);
-        border-color: rgba(255,255,255,0.55);
-        transform: translateY(-1px);
-      }
-      .btn.selected {
-        background: rgba(255,255,255,0.12);
-        border-color: rgba(255,255,255,0.6);
-      }
 
       /* Settings desktop: side-by-side inputs, vertically centered */
       #page-settings {
@@ -710,18 +693,9 @@
       .field-label { font-size: 14px; margin-bottom: 10px; }
       .field-input { font-size: 26px; padding: 20px 24px; }
 
-      /* Save Changes btn: dark filled (not transparent like override buttons) */
+      /* Settings save btn layout fix for desktop (no style overrides, just layout) */
       .settings-save-btn {
-        background: rgba(255,255,255,0.12) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        font-size: 16px !important;
-        font-weight: 400 !important;
-        letter-spacing: 0.3px !important;
         padding: 18px !important;
-      }
-      .settings-save-btn:hover {
-        background: rgba(255,255,255,0.2) !important;
-        border-color: rgba(255,255,255,0.35) !important;
       }
 
       /* History desktop */
