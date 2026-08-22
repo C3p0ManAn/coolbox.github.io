@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cool Box</title>
+  <title>PoCoBox</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -13,17 +13,17 @@
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg-dark:      #1a1a1a;
-      --bg-darker:    #111111;
-      --bg-card:      #222222;
-      --bg-btn:       #2e2e2e;
-      --bg-btn-hover: #3a3a3a;
-      --border:       rgba(255,255,255,0.18);
+      --bg-dark:      #0f172a; /* Slate 900 */
+      --bg-darker:    #020617; /* Slate 950 */
+      --bg-card:      #1e293b; /* Slate 800 */
+      --bg-btn:       #334155; /* Slate 700 */
+      --bg-btn-hover: #475569; /* Slate 600 */
+      --border:       rgba(14, 165, 233, 0.25); /* Cyan tint */
       --text-primary: #ffffff;
-      --text-secondary: rgba(255,255,255,0.55);
+      --text-secondary: rgba(255,255,255,0.7);
       --nav-width:    72px;
       --nav-bottom:   64px;
-      --accent:       rgba(255,255,255,0.85);
+      --accent:       #0ea5e9; /* Sky 500 */
     }
 
     html, body {
@@ -77,12 +77,13 @@
       flex-direction: column;
       align-items: center;
       width: var(--nav-width);
-      background: rgba(0,0,0,0.35);
-      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(30,41,59,0.7), rgba(15,23,42,0.9));
+      border-right: 1px solid rgba(255,255,255,0.05);
       padding-top: 20px;
       gap: 0;
       flex-shrink: 0;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      box-shadow: 2px 0 20px rgba(0,0,0,0.5);
     }
     .nav-item {
       display: flex;
@@ -104,8 +105,9 @@
     .nav-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
     .nav-item:hover svg { transform: scale(1.1); }
     .nav-item.active {
-      color: var(--text-primary);
-      background: rgba(255,255,255,0.08);
+      color: var(--accent);
+      background: rgba(14, 165, 233, 0.1);
+      text-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
     }
     .nav-item.active::left-bar {
       content: '';
@@ -120,8 +122,9 @@
       position: absolute;
       left: 0; top: 15%; bottom: 15%;
       width: 3px;
-      background: white;
+      background: var(--accent);
       border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 8px var(--accent);
     }
 
     /* =============================================
@@ -146,6 +149,26 @@
     .page.active { display: flex !important; }
 
     /* =============================================
+       LOGO STYLES
+    ============================================= */
+    .brand-logo {
+      width: auto;
+      height: 48px;
+      object-fit: contain;
+      display: inline-block;
+      vertical-align: middle;
+      
+      /* 3D Emboss & Shadow Effect for transparent PNG */
+      filter: 
+        drop-shadow(0px 6px 8px rgba(0, 0, 0, 0.7)) 
+        drop-shadow(0px -1px 1px rgba(255, 255, 255, 0.3));
+      
+      /* Improve rendering quality */
+      transform: translateZ(0);
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    /* =============================================
        BOTTOM NAV (mobile)
     ============================================= */
     .bottom-nav {
@@ -155,8 +178,9 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      background: rgba(20,20,20,0.92);
-      border-top: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95));
+      border-top: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.6);
       backdrop-filter: blur(20px);
       z-index: 100;
     }
@@ -219,17 +243,27 @@
       padding: 24px 28px;
     }
 
-    /* Box icon */
-    .box-icon {
-      width: 52px;
-      height: 52px;
-      margin-bottom: 16px;
-      opacity: 0.85;
-      animation: floatIcon 4s ease-in-out infinite;
+    /* Hero Logo */
+    .dashboard-hero-logo {
+      /* Dynamic sizing: scales based on viewport, perfectly maintaining aspect ratio */
+      height: clamp(120px, 20vw, 240px) !important;
+      width: auto !important;
+      /* Use a strong negative margin to offset the empty transparent space at the bottom of the image file */
+      margin-bottom: clamp(-20px, -6vw, -60px);
+      animation: floatLogo 6s ease-in-out infinite;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
+      cursor: pointer;
     }
-    @keyframes floatIcon {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-6px); }
+    .dashboard-hero-logo:hover {
+      transform: scale(1.15) translateY(-5px) translateZ(0);
+      filter: 
+        drop-shadow(0px 15px 25px rgba(14, 165, 233, 0.6)) 
+        drop-shadow(0px -1px 2px rgba(255, 255, 255, 0.5));
+      animation-play-state: paused;
+    }
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0px) translateZ(0); }
+      50%      { transform: translateY(-12px) translateZ(0); }
     }
 
     .temp-label {
@@ -247,6 +281,7 @@
       line-height: 1;
       margin-bottom: 16px;
       transition: opacity 0.4s ease;
+      text-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
     .temp-value.error {
       font-size: clamp(28px, 6vw, 40px);
@@ -295,8 +330,8 @@
     .btn {
       flex: 1;
       padding: 16px;
-      background: var(--bg-btn);
-      border: 1px solid var(--border);
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255,255,255,0.05);
       border-radius: 100px;
       color: var(--text-primary);
       font-size: 13px;
@@ -304,11 +339,8 @@
       letter-spacing: 1.2px;
       text-transform: uppercase;
       cursor: pointer;
-      transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        transform 0.15s ease,
-        box-shadow 0.2s ease;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.5), -2px -2px 8px rgba(255,255,255,0.02), inset 0 1px 1px rgba(255,255,255,0.05);
+      transition: all 0.2s ease;
       position: relative;
       overflow: hidden;
       user-select: none;
@@ -323,22 +355,23 @@
       border-radius: inherit;
     }
     .btn:hover {
-      background: var(--bg-btn-hover);
-      border-color: rgba(255,255,255,0.35);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      background: linear-gradient(145deg, #28374d, #141f36);
+      box-shadow: 5px 5px 12px rgba(0,0,0,0.6), -2px -2px 10px rgba(255,255,255,0.03), inset 0 1px 1px rgba(255,255,255,0.1);
       transform: translateY(-1px);
     }
     .btn:active {
-      transform: scale(0.96) translateY(0px);
-      box-shadow: none;
+      transform: scale(0.97) translateY(0px);
+      box-shadow: inset 4px 4px 10px rgba(0,0,0,0.6), inset -2px -2px 8px rgba(255,255,255,0.02);
     }
-    .btn:active::after { opacity: 0.06; }
+    .btn:active::after { opacity: 0.04; }
 
     /* Active / selected button state */
     .btn.selected {
-      background: rgba(255,255,255,0.15);
-      border-color: rgba(255,255,255,0.5);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 4px 20px rgba(0,0,0,0.3);
+      background: linear-gradient(145deg, #0ea5e9, #0284c7);
+      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4), inset 0 2px 4px rgba(255,255,255,0.3);
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
 
     .btn-full { width: 100%; flex: none; }
@@ -388,11 +421,13 @@
 
     .settings-card {
       margin: 0 20px 20px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.8));
+      border: 1px solid rgba(255,255,255,0.05);
+      border-top: 1px solid rgba(255,255,255,0.1);
       border-radius: 20px;
       padding: 24px 20px;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05);
     }
 
     .settings-fields {
@@ -420,22 +455,23 @@
     .field-input {
       width: 100%;
       padding: 18px 20px;
-      background: var(--bg-darker);
-      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.05);
       border-radius: 100px;
       color: var(--text-primary);
       font-size: 22px;
       font-weight: 300;
       text-align: center;
       outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: inset 3px 3px 8px rgba(0,0,0,0.5), inset -2px -2px 6px rgba(255,255,255,0.02);
+      transition: all 0.2s ease;
       -moz-appearance: textfield;
     }
     .field-input::-webkit-outer-spin-button,
     .field-input::-webkit-inner-spin-button { -webkit-appearance: none; }
     .field-input:focus {
-      border-color: rgba(255,255,255,0.45);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+      border-color: var(--accent);
+      box-shadow: inset 3px 3px 8px rgba(0,0,0,0.5), 0 0 0 3px rgba(14, 165, 233, 0.25);
     }
     .field-input::placeholder { color: rgba(255,255,255,0.25); }
 
@@ -755,6 +791,11 @@
 
   <!-- Sidebar (desktop) -->
   <nav class="sidebar">
+    <!-- Logo -->
+    <div style="padding: 10px 0 20px;">
+      <img src="logo.png" alt="PoCoBox" class="brand-logo">
+    </div>
+
     <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <rect x="3" y="3" width="8" height="8" rx="1.5"/>
@@ -789,7 +830,7 @@
 
       <!-- Mobile header -->
       <div class="dashboard-header">
-        <h1>Cool Box</h1>
+        <h1>PoCoBox</h1>
         <p class="subtitle">Variant 2</p>
       </div>
 
@@ -800,18 +841,12 @@
 
           <!-- Desktop-only header inside left column -->
           <div class="dashboard-header-desktop">
-            <h1>Cool Box</h1>
+            <h1>PoCoBox</h1>
           </div>
 
           <div class="temp-display-block" style="text-align:center; align-items:center;">
-            <!-- Box SVG icon -->
-            <svg class="box-icon" viewBox="0 0 60 60" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M30 8 L52 20 L52 40 L30 52 L8 40 L8 20 Z"/>
-              <path d="M30 8 L30 52"/>
-              <path d="M8 20 L52 20"/>
-              <path d="M19 14 L41 26"/>
-              <path d="M8 20 L30 32 L52 20"/>
-            </svg>
+            <!-- Logo image -->
+            <img src="logo.png" alt="PoCoBox" class="brand-logo dashboard-hero-logo">
 
             <p class="temp-label">Inside Temperature</p>
             <div class="temp-value" id="tempValue">-- °C</div>
@@ -851,16 +886,18 @@
     <div id="page-history" class="page">
       <div class="history-header">
         <div class="settings-logo">
-          <svg viewBox="0 0 60 60" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M30 8 L52 20 L52 40 L30 52 L8 40 L8 20 Z"/>
-            <path d="M30 8 L30 52"/>
-            <path d="M8 20 L52 20"/>
-            <path d="M8 20 L30 32 L52 20"/>
-          </svg>
-          <span>Cool Box</span>
+          <img src="logo.png" alt="PoCoBox" class="brand-logo">
+          <span>PoCoBox</span>
         </div>
         <p class="settings-subtitle">IoT Temperature Monitor &amp; Control</p>
-        <h1 class="settings-title">History</h1>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+          <h1 class="settings-title" style="margin-top: 10px;">History</h1>
+          <div class="time-picker" style="display: flex; gap: 8px; margin-top: 10px;">
+            <button class="btn" style="padding: 8px 16px; font-size: 13px;" onclick="setTimeRange(30, this)" id="btnRange30">30 Min</button>
+            <button class="btn selected" style="padding: 8px 16px; font-size: 13px;" onclick="setTimeRange(60, this)" id="btnRange60">1H</button>
+            <button class="btn" style="padding: 8px 16px; font-size: 13px;" onclick="setTimeRange(120, this)" id="btnRange120">2H</button>
+          </div>
+        </div>
       </div>
       <div class="history-content" style="flex: 1; padding: 0 40px 40px; position: relative; min-height: 400px; display: flex; align-items: center; justify-content: center;">
         <canvas id="historyChart"></canvas>
@@ -871,16 +908,11 @@
     <div id="page-settings" class="page">
       <div class="settings-header">
         <div class="settings-logo">
-          <svg viewBox="0 0 60 60" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M30 8 L52 20 L52 40 L30 52 L8 40 L8 20 Z"/>
-            <path d="M30 8 L30 52"/>
-            <path d="M8 20 L52 20"/>
-            <path d="M8 20 L30 32 L52 20"/>
-          </svg>
-          <span>Cool Box</span>
+          <img src="logo.png" alt="PoCoBox" class="brand-logo">
+          <span>PoCoBox</span>
         </div>
         <p class="settings-subtitle">IoT Temperature Monitor &amp; Control</p>
-        <h2 class="settings-title">Cool Box Calibration Settings</h2>
+        <h2 class="settings-title">PoCoBox Calibration Settings</h2>
       </div>
 
       <div class="settings-card">
@@ -1201,12 +1233,23 @@
   }
 
   let historyChart = null;
+  let historyLimit = 60;
+
+  function setTimeRange(minutes, btnEl) {
+    historyLimit = minutes;
+    ['btnRange30', 'btnRange60', 'btnRange120'].forEach(id => {
+      document.getElementById(id).classList.remove('selected');
+    });
+    btnEl.classList.add('selected');
+    loadHistory();
+  }
+
   async function loadHistory() {
     const { data, error } = await db
       .from('temperature_log')
       .select('temperature, created_at')
       .order('created_at', { ascending: false })
-      .limit(60);
+      .limit(historyLimit);
 
     if (error) {
       console.error("Error loading history:", error);
@@ -1237,8 +1280,8 @@
           datasets: [{
             label: 'Temperature (°C)',
             data: temps,
-            borderColor: '#4ade80',
-            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+            borderColor: '#0ea5e9',
+            backgroundColor: 'rgba(14, 165, 233, 0.15)',
             borderWidth: 2,
             pointRadius: 2,
             fill: true,
