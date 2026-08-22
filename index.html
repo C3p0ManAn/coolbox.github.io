@@ -228,7 +228,7 @@
     }
 
     .dashboard-header {
-      padding: 28px 28px 0;
+      padding: 48px 28px 0;
       text-align: center;
     }
     .dashboard-header h1 {
@@ -254,12 +254,11 @@
     /* Hero Logo */
     .dashboard-hero-logo {
       /* Fluidly scale logo width, max 460px on desktop so it doesn't overflow mobile */
-      margin-top: -12px; 
       width: 100% !important;
       max-width: 460px !important;
       height: auto !important;
-      /* Proportional negative margin to eat the transparent space at the bottom */
-      margin-bottom: -28%;
+      /* Proportional negative margin to completely swallow the empty transparent padding */
+      margin-bottom: -22%;
       animation: floatLogo 6s ease-in-out infinite;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
       cursor: default;
@@ -609,7 +608,7 @@
 
       /* ---- Dashboard page: full-height grid ---- */
       #page-dashboard {
-        overflow: hidden;
+        overflow-y: auto; /* Fix clipping on shorter desktop screens */
       }
 
       /* Title row: "Cool Box" top-left, full width */
@@ -675,8 +674,9 @@
       }
       .override-section {
         width: 100%;
-        max-width: 340px;
-        padding: 0;
+        max-width: 440px; /* Increased from 340px to make it larger */
+        padding: 32px;    /* Restore internal padding */
+        border-radius: 24px;
       }
       .override-title {
         text-align: center;
