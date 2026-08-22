@@ -153,7 +153,7 @@
     ============================================= */
     .brand-logo {
       width: auto;
-      height: 240px;
+      height: 60px;
       object-fit: contain;
       display: inline-block;
       vertical-align: middle;
@@ -245,16 +245,21 @@
 
     /* Hero Logo */
     .dashboard-hero-logo {
-      height: 60px !important;
-      width: auto !important;
-      /* Adjusted negative margin for 60px size */
-      margin-bottom: -12px;
+      /* Fluidly scale logo width, max 400px on desktop so it doesn't overflow mobile */
+      width: 100% !important;
+      max-width: 380px !important;
+      height: auto !important;
+      /* Proportional negative margin to eat the transparent space at the bottom */
+      margin-bottom: -12%;
       animation: floatLogo 6s ease-in-out infinite;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
       cursor: pointer;
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     .dashboard-hero-logo:hover {
-      transform: scale(1.15) translateY(-5px) translateZ(0);
+      transform: scale(1.1) translateY(-5px) translateZ(0);
       filter: 
         drop-shadow(0px 15px 25px rgba(14, 165, 233, 0.6)) 
         drop-shadow(0px -1px 2px rgba(255, 255, 255, 0.5));
@@ -262,15 +267,23 @@
     }
     @keyframes floatLogo {
       0%, 100% { transform: translateY(0px) translateZ(0); }
-      50%      { transform: translateY(-8px) translateZ(0); }
+      50%      { transform: translateY(-12px) translateZ(0); }
+    }
+
+    .temp-display-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px; /* Uniform spacing between logo, text, and values */
+      width: 100%;
     }
 
     .temp-label {
-      font-size: 16px;
+      font-size: 17px;
       color: var(--text-secondary);
       font-weight: 400;
       letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 0;
     }
 
     .temp-value {
@@ -278,7 +291,7 @@
       font-weight: 300;
       letter-spacing: -3px;
       line-height: 1;
-      margin-bottom: 16px;
+      margin-bottom: 0;
       transition: opacity 0.4s ease;
       text-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
@@ -293,6 +306,7 @@
       color: var(--text-secondary);
       font-weight: 400;
       letter-spacing: 0.3px;
+      margin-top: 8px;
     }
     .relay-status span { color: var(--text-primary); }
 
