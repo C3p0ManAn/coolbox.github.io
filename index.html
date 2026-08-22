@@ -230,7 +230,7 @@
     }
 
     .dashboard-header {
-      padding: 36px 24px 0;
+      padding: 48px 28px 0;
       text-align: center;
     }
     .dashboard-header h1 {
@@ -255,12 +255,13 @@
 
     /* Hero Logo */
     .dashboard-hero-logo {
-      /* Fluidly scale logo width, max 640px on desktop so it doesn't overflow mobile */
+      /* Fluidly scale logo width, max 800px on desktop so it doesn't overflow mobile */
       width: 100% !important;
-      max-width: 640px !important;
+      max-width: 800px !important;
       height: auto !important;
-      /* Symmetrical tight spacing for top and bottom */
-      margin-top: 0px;
+      max-height: none !important; /* Unlocks the logo to grow tall along with its massive width */
+      /* Pull logo up closer to the header text */
+      margin-top: -32px;
       margin-bottom: 0px;
       animation: floatLogo 6s ease-in-out infinite;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;
@@ -436,11 +437,14 @@
     .settings-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 6px;
     }
-    .settings-logo svg { width: 22px; height: 22px; opacity: 0.85; }
-    .settings-logo span { font-size: 18px; font-weight: 300; }
+    .settings-logo .brand-logo {
+      height: 32px !important;
+      width: auto !important;
+    }
+    .settings-logo span { font-size: 22px; font-weight: 300; letter-spacing: -0.5px; }
     .settings-subtitle {
       font-size: 12px;
       color: var(--text-secondary);
